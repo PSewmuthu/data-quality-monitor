@@ -86,7 +86,7 @@ def generate_candidates(n=300):
             "sector": random.choice(SECTORS)
         })
 
-        return pd.DataFrame(records)
+    return pd.DataFrame(records)
 
 
 def generate_job_postings(n=80):
@@ -120,4 +120,30 @@ def generate_job_postings(n=80):
             "applications_count": random.randint(0, 120) if inject > 0.07 else None
         })
 
-        return pd.DataFrame(records)
+    return pd.DataFrame(records)
+
+
+def generate_applications(candidates_df, jobs_df, n=500):
+    cids = candidates_df['candidate_id'].tolist()
+    jids = jobs_df['job_id'].tolist()
+    records = []
+
+    for i in range(1, n + 1):
+        inject = random.random()
+
+        records.append({
+            "application_id": f"A{i:04d}",
+            # 3% orphaned candidate id
+            "candidate_id": random.choice(cids) if inject > 0.03 else "C9999",
+            # 3% orphaned job id
+            "job_id": random.choice(jids) if inject > 0.03 else "J999",
+            # 3% future date, 2% missing
+            "application_date": random_date(200, 0) if inject > 0.05 else ("2045-01-01" if inject < 0.03 else None),
+            "stage": random.choice(STATUSES),
+            # 6% missing
+            "notes": "Good candidate" if inject > 0.7 else ("Needs follow-up" if inject < 0.1 else None),
+            # 10% missing
+            "interviewer": f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}" if inject > 0.1 else None
+        })
+
+    return pd.DataFrame(records)
