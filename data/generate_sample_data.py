@@ -147,3 +147,18 @@ def generate_applications(candidates_df, jobs_df, n=500):
         })
 
     return pd.DataFrame(records)
+
+
+if __name__ == "__main__":
+    out = os.path.dirname(__file__)
+
+    candidates = generate_candidates(300)
+    job_postings = generate_job_postings(80)
+    applications = generate_applications(candidates, job_postings, 500)
+
+    candidates.to_csv(f"{out}/candidates.csv", index=False)
+    job_postings.to_csv(f"{out}/job_postings.csv", index=False)
+    applications.to_csv(f"{out}/applications.csv", index=False)
+
+    print(
+        f"Generated {len(candidates)} candidates, {len(job_postings)} job postings, and {len(applications)} applications.")
