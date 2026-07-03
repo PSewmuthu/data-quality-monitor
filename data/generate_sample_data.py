@@ -87,3 +87,37 @@ def generate_candidates(n=300):
         })
 
         return pd.DataFrame(records)
+
+
+def generate_job_postings(n=80):
+    records = []
+
+    for i in range(1, n + 1):
+        inject = random.random()
+
+        # 5% duplicates
+        jid = f"J{i:03d}" if inject > 0.05 else f"J{random.randint(1, i):03d}"
+        posted = random_date(180, 0) if inject > 0.07 else (
+            "2045-01-01" if inject < 0.03 else None)  # 3% future date, 4% missing
+        closing = (datetime.strptime(posted, '%Y-%m-%d') + timedelta(days=random.randint(14, 60))).strftime('%Y-%m-%d') if inject > 0.07 else (
+            (datetime.strptime(posted, "%Y-%m-%d") - timedelta(days=random.randint(1, 13))) if inject < 0.03 else None)  # 3% past date, 4% missing
+        min_experience = random.randint(
+            0, 5) if inject > 0.05 else -1  # 5% negative
+        max_experience = random.randint(5, 15) if inject > 0.05 else ((min_experience - random.randint(
+            1, 10)) if (inject < 0.03 and min_experience >= 0) else -1)  # 2% negative, 3% max < min
+
+        records.append({
+            "job_id": jid,
+            "title": random.choice(JOB_TITLES),
+            "sector": random.choice(SECTORS),
+            "min_experience": min_experience,
+            "max_experience": max_experience,
+            "posted_date": posted,
+            "closing_date": closing,
+            "district": random.choice(DISTRICTS),
+            "is_active": random.choice([True, False]),
+            # 7% missing
+            "applications_count": random.randint(0, 120) if inject > 0.07 else None
+        })
+
+        return pd.DataFrame(records)
