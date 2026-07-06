@@ -12,7 +12,7 @@ def save_json_report(results: dict, alerts: list, output_dir: str) -> str:
     os.makedirs(output_dir, exist_ok=True)
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = os.path.join(output_dir, f"data_quality_report_{ts}.json")
+    path = os.path.join(output_dir, f"dq_report_{ts}.json")
     payload = {
         "report_metadata": {
             "generated_at":    results["run_time"],
