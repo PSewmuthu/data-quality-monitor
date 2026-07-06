@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Data Quality Dashboard</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+		<style>
+			:root {
+				--bg: #0f1117;
+				--surface: #1a1d27;
+				--surface2: #22263a;
+				--border: #2d3150;
+				--text: #e2e8f0;
+				--muted: #8892a4;
+				--excellent: #10b981;
+				--good: #38bdf8;
+				--warning: #f59e0b;
+				--critical: #ef4444;
+				--accent: #6366f1;
+			}
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				background: var(--bg);
+				color: var(--text);
+				font-family: "Segoe UI", system-ui, sans-serif;
+				min-height: 100vh;
+			}
+
+			/* ── HEADER ── */
+			header {
+				background: linear-gradient(135deg, #1a1d27 0%, #22263a 100%);
+				border-bottom: 1px solid var(--border);
+				padding: 20px 32px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			}
+			.logo {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+			}
+			.logo-icon {
+				width: 40px;
+				height: 40px;
+				background: linear-gradient(135deg, var(--accent), #8b5cf6);
+				border-radius: 10px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 20px;
+			}
+			.logo-text h1 {
+				font-size: 18px;
+				font-weight: 700;
+				letter-spacing: 0.5px;
+			}
+			.logo-text p {
+				font-size: 12px;
+				color: var(--muted);
+			}
+			.header-right {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+			}
+			.run-time {
+				font-size: 12px;
+				color: var(--muted);
+			}
+			.refresh-btn {
+				background: var(--surface2);
+				border: 1px solid var(--border);
+				color: var(--text);
+				padding: 8px 16px;
+				border-radius: 8px;
+				cursor: pointer;
+				font-size: 13px;
+				transition: all 0.2s;
+			}
+			.refresh-btn:hover {
+				border-color: var(--accent);
+				color: var(--accent);
+			}
+
+			/* ── LAYOUT ── */
+			.container {
+				max-width: 1400px;
+				margin: 0 auto;
+				padding: 24px 32px;
+			}
+
+			/* ── SYSTEM SCORE HERO ── */
+			.hero {
+				display: grid;
+				grid-template-columns: 280px 1fr;
+				gap: 20px;
+				margin-bottom: 24px;
+			}
+			.hero-score {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 28px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				position: relative;
+				overflow: hidden;
+			}
+			.hero-score::before {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background: radial-gradient(
+					circle at 50% 0%,
+					rgba(99, 102, 241, 0.12) 0%,
+					transparent 70%
+				);
+			}
+			.score-ring {
+				position: relative;
+				width: 140px;
+				height: 140px;
+				margin-bottom: 16px;
+			}
+			.score-ring svg {
+				transform: rotate(-90deg);
+			}
+			.score-ring .track {
+				fill: none;
+				stroke: var(--surface2);
+				stroke-width: 10;
+			}
+			.score-ring .fill {
+				fill: none;
+				stroke-width: 10;
+				stroke-linecap: round;
+				transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+			}
+			.score-center {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+			}
+			.score-num {
+				font-size: 32px;
+				font-weight: 800;
+				line-height: 1;
+			}
+			.score-label {
+				font-size: 11px;
+				color: var(--muted);
+				margin-top: 2px;
+			}
+			.hero-score h3 {
+				font-size: 13px;
+				color: var(--muted);
+				margin-bottom: 6px;
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+			.status-badge {
+				padding: 4px 14px;
+				border-radius: 20px;
+				font-size: 13px;
+				font-weight: 600;
+			}
+
+			.hero-kpis {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 16px;
+			}
+			.kpi-card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 20px;
+				position: relative;
+				overflow: hidden;
+				transition:
+					transform 0.2s,
+					border-color 0.2s;
+				cursor: default;
+			}
+			.kpi-card:hover {
+				transform: translateY(-2px);
+				border-color: var(--accent);
+			}
+			.kpi-card::after {
+				content: "";
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 3px;
+				border-radius: 0 0 12px 12px;
+			}
+			.kpi-card.excellent::after {
+				background: var(--excellent);
+			}
+			.kpi-card.good::after {
+				background: var(--good);
+			}
+			.kpi-card.warning::after {
+				background: var(--warning);
+			}
+			.kpi-card.critical::after {
+				background: var(--critical);
+			}
+			.kpi-icon {
+				font-size: 24px;
+				margin-bottom: 10px;
+			}
+			.kpi-value {
+				font-size: 28px;
+				font-weight: 800;
+				line-height: 1;
+			}
+			.kpi-label {
+				font-size: 12px;
+				color: var(--muted);
+				margin-top: 4px;
+			}
+			.kpi-sub {
+				font-size: 11px;
+				color: var(--muted);
+				margin-top: 8px;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+
+			/* ── SECTION TITLES ── */
+			.section-header {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 16px;
+			}
+			.section-header h2 {
+				font-size: 16px;
+				font-weight: 600;
+			}
+			.section-header span {
+				font-size: 12px;
+				color: var(--muted);
+			}
+
+			/* ── DATASET TABS ── */
+			.tabs {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 20px;
+			}
+			.tab {
+				padding: 8px 20px;
+				border-radius: 8px;
+				border: 1px solid var(--border);
+				background: var(--surface);
+				color: var(--muted);
+				cursor: pointer;
+				font-size: 13px;
+				transition: all 0.2s;
+			}
+			.tab.active {
+				background: var(--accent);
+				border-color: var(--accent);
+				color: #fff;
+				font-weight: 600;
+			}
+			.tab:hover:not(.active) {
+				border-color: var(--accent);
+				color: var(--text);
+			}
+
+			/* ── GRID ── */
+			.grid-2 {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 20px;
+				margin-bottom: 24px;
+			}
+			.grid-3 {
+				display: grid;
+				grid-template-columns: 1fr 1fr 1fr;
+				gap: 20px;
+				margin-bottom: 24px;
+			}
+			.card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 20px;
+			}
+			.card h3 {
+				font-size: 14px;
+				font-weight: 600;
+				margin-bottom: 16px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			/* ── DIM BARS ── */
+			.dim-row {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				margin-bottom: 14px;
+			}
+			.dim-name {
+				font-size: 13px;
+				width: 100px;
+				flex-shrink: 0;
+				text-transform: capitalize;
+			}
+			.dim-bar-bg {
+				flex: 1;
+				height: 8px;
+				background: var(--surface2);
+				border-radius: 4px;
+				overflow: hidden;
+			}
+			.dim-bar {
+				height: 100%;
+				border-radius: 4px;
+				transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+			}
+			.dim-score {
+				font-size: 13px;
+				font-weight: 600;
+				width: 46px;
+				text-align: right;
+				flex-shrink: 0;
+			}
+			.dim-status {
+				font-size: 10px;
+				width: 72px;
+				text-align: center;
+				padding: 2px 6px;
+				border-radius: 10px;
+				flex-shrink: 0;
+				font-weight: 600;
+			}
+
+			/* ── STATUS COLORS ── */
+			.s-excellent {
+				color: var(--excellent);
+			}
+			.s-good {
+				color: var(--good);
+			}
+			.s-warning {
+				color: var(--warning);
+			}
+			.s-critical {
+				color: var(--critical);
+			}
+			.bg-excellent {
+				background: rgba(16, 185, 129, 0.15);
+				color: var(--excellent);
+			}
+			.bg-good {
+				background: rgba(56, 189, 248, 0.15);
+				color: var(--good);
+			}
+			.bg-warning {
+				background: rgba(245, 158, 11, 0.15);
+				color: var(--warning);
+			}
+			.bg-critical {
+				background: rgba(239, 68, 68, 0.15);
+				color: var(--critical);
+			}
+			.bar-excellent {
+				background: var(--excellent);
+			}
+			.bar-good {
+				background: var(--good);
+			}
+			.bar-warning {
+				background: var(--warning);
+			}
+			.bar-critical {
+				background: var(--critical);
+			}
+
+			/* ── ALERTS ── */
+			.alert-list {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			.alert-item {
+				background: var(--surface2);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+				display: flex;
+				gap: 12px;
+				align-items: flex-start;
+				border-left: 4px solid;
+				transition: transform 0.15s;
+			}
+			.alert-item:hover {
+				transform: translateX(2px);
+			}
+			.alert-item.CRITICAL {
+				border-left-color: var(--critical);
+			}
+			.alert-item.HIGH {
+				border-left-color: #f97316;
+			}
+			.alert-item.MEDIUM {
+				border-left-color: var(--warning);
+			}
+			.alert-item.LOW {
+				border-left-color: var(--good);
+			}
+			.alert-sev {
+				font-size: 11px;
+				font-weight: 700;
+				padding: 3px 8px;
+				border-radius: 4px;
+				flex-shrink: 0;
+			}
+			.alert-body {
+				flex: 1;
+			}
+			.alert-rule {
+				font-size: 13px;
+				font-weight: 600;
+			}
+			.alert-msg {
+				font-size: 12px;
+				color: var(--muted);
+				margin-top: 3px;
+			}
+			.alert-meta {
+				font-size: 11px;
+				color: var(--muted);
+				margin-top: 4px;
+			}
+			.no-alerts {
+				text-align: center;
+				padding: 32px;
+				color: var(--muted);
+			}
+			.no-alerts .icon {
+				font-size: 40px;
+				margin-bottom: 8px;
+			}
+
+			/* ── CHART CONTAINERS ── */
+			.chart-wrap {
+				position: relative;
+				height: 220px;
+			}
+
+			/* ── DATASET CARDS ── */
+			.ds-grid {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 16px;
+				margin-bottom: 24px;
+			}
+			.ds-card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 18px;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+			.ds-card:hover,
+			.ds-card.active {
+				border-color: var(--accent);
+			}
+			.ds-card.active {
+				background: rgba(99, 102, 241, 0.08);
+			}
+			.ds-name {
+				font-size: 14px;
+				font-weight: 600;
+				margin-bottom: 8px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.ds-rows {
+				font-size: 12px;
+				color: var(--muted);
+				margin-bottom: 12px;
+			}
+			.ds-score-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			}
+			.ds-score-big {
+				font-size: 26px;
+				font-weight: 800;
+			}
+
+			/* ── FOOTER ── */
+			footer {
+				text-align: center;
+				padding: 24px;
+				color: var(--muted);
+				font-size: 12px;
+				border-top: 1px solid var(--border);
+				margin-top: 8px;
+			}
+
+			canvas {
+				max-width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div class="logo">
+				<div class="logo-icon">🔍</div>
+				<div class="logo-text">
+					<h1>Data Quality Dashboard</h1>
+					<p>Monitoring System</p>
+				</div>
+			</div>
+			<div class="header-right">
+				<span class="run-time" id="runTime">Last run: 2026-06-24 05:41:12</span>
+				<button class="refresh-btn" onclick="simulateRefresh()">
+					⟳ Refresh
+				</button>
+			</div>
+		</header>
+
+		<div class="container">
+			<!-- HERO -->
+			<div class="hero">
+				<div class="hero-score" id="heroScore">
+					<h3>System Score</h3>
+					<div class="score-ring">
+						<svg viewBox="0 0 140 140" width="140" height="140">
+							<circle class="track" cx="70" cy="70" r="60" />
+							<circle
+								class="fill"
+								id="scoreFill"
+								cx="70"
+								cy="70"
+								r="60"
+								stroke-dasharray="376.99"
+								stroke-dashoffset="376.99"
+							/>
+						</svg>
+						<div class="score-center">
+							<span class="score-num s-excellent" id="systemScoreNum">--</span>
+							<span class="score-label">/ 100</span>
+						</div>
+					</div>
+					<span class="status-badge bg-excellent" id="systemStatus">--</span>
+				</div>
+
+				<div class="hero-kpis" id="heroKpis">
+					<!-- filled by JS -->
+				</div>
+			</div>
+
+			<!-- DATASET SELECTOR -->
+			<div class="section-header">
+				<h2>Dataset Breakdown</h2>
+				<span>Click a dataset to drill down</span>
+			</div>
+			<div class="ds-grid" id="dsGrid"></div>
+
+			<!-- DIMENSION CHART + RADAR -->
+			<div class="grid-2">
+				<div class="card">
+					<h3>Dimension Scores — <span id="activeDsLabel">candidates</span></h3>
+					<div id="dimBars"></div>
+				</div>
+				<div class="card">
+					<h3>Radar Overview</h3>
+					<div class="chart-wrap">
+						<canvas id="radarChart"></canvas>
+					</div>
+				</div>
+			</div>
+
+			<!-- SCORES BAR CHART + ALERT HISTORY DONUT -->
+			<div class="grid-2">
+				<div class="card">
+					<h3>Dataset Score Comparison</h3>
+					<div class="chart-wrap">
+						<canvas id="barChart"></canvas>
+					</div>
+				</div>
+				<div class="card">
+					<h3>Score Distribution by Dimension</h3>
+					<div class="chart-wrap">
+						<canvas id="dimBarChart"></canvas>
+					</div>
+				</div>
+			</div>
+
+			<!-- ALERTS -->
+			<div class="section-header">
+				<h2>Active Alerts</h2>
+				<span id="alertCount">0 alerts</span>
+			</div>
+			<div class="card" style="margin-bottom: 24px">
+				<div class="alert-list" id="alertList"></div>
+			</div>
+		</div>
+
+		<footer>
+			Data Quality Monitoring System · Built with Python + Chart.js
+		</footer>
+
+		<script>
+			// ==============================================
+			//  DATA (from monitor.py output)
+			// ==============================================
+			const DQ_DATA = {
+  "system_score": 97.41,
+  "system_status": "EXCELLENT",
+  "run_time": "2026-07-06T12:33:30",
+  "datasets": {
+    "candidates": {
+      "overall_score": 96.22,
+      "overall_status": "EXCELLENT",
+      "row_count": 300,
+      "col_count": 13,
+      "dimensions": {
+        "completeness": {
+          "score": 98.37,
+          "status": "EXCELLENT"
+        },
+        "uniqueness": {
+          "score": 98.34,
+          "status": "GOOD"
+        },
+        "validity": {
+          "score": 91.01,
+          "status": "GOOD"
+        },
+        "consistency": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "timeliness": {
+          "score": 91.17,
+          "status": "GOOD"
+        },
+        "accuracy": {
+          "score": 98.45,
+          "status": "EXCELLENT"
+        }
+      }
+    },
+    "job_postings": {
+      "overall_score": 96.84,
+      "overall_status": "EXCELLENT",
+      "row_count": 80,
+      "col_count": 10,
+      "dimensions": {
+        "completeness": {
+          "score": 86.56,
+          "status": "GOOD"
+        },
+        "uniqueness": {
+          "score": 96.25,
+          "status": "GOOD"
+        },
+        "validity": {
+          "score": 98.25,
+          "status": "EXCELLENT"
+        },
+        "consistency": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "timeliness": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "accuracy": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        }
+      }
+    },
+    "applications": {
+      "overall_score": 99.18,
+      "overall_status": "EXCELLENT",
+      "row_count": 500,
+      "col_count": 7,
+      "dimensions": {
+        "completeness": {
+          "score": 99.68,
+          "status": "EXCELLENT"
+        },
+        "uniqueness": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "validity": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "consistency": {
+          "score": 95.4,
+          "status": "EXCELLENT"
+        },
+        "timeliness": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "accuracy": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        }
+      }
+    }
+  },
+  "alerts": [
+    {
+      "id": "ALT-002",
+      "timestamp": "2026-07-06T12:33:30",
+      "severity": "HIGH",
+      "dataset": "job_postings",
+      "rule": "Low Fill Rate on Required Field",
+      "message": "[JOB_POSTINGS] Column 'min_salary' fill rate is 0.0% (80 missing)",
+      "score": 0.0,
+      "dimension": "completeness"
+    },
+    {
+      "id": "ALT-001",
+      "timestamp": "2026-07-06T12:33:30",
+      "severity": "MEDIUM",
+      "dataset": "candidates",
+      "rule": "Column Validity Issue",
+      "message": "[CANDIDATES] Column 'phone': Invalid phones: [783197857.0, 710872248.0, 715831819.0]",
+      "score": 0.0,
+      "dimension": "validity"
+    }
+  ]
+};
+
+			// ==============================================
+			//  HELPERS
+			// ==============================================
+			const cls = (s) => s.toLowerCase();
+			const statusCol = {
+				EXCELLENT: "#10b981",
+				GOOD: "#38bdf8",
+				WARNING: "#f59e0b",
+				CRITICAL: "#ef4444",
+			};
+			const DIM_ICONS = {
+				completeness: "🗂️",
+				uniqueness: "🔑",
+				validity: "✅",
+				consistency: "🔗",
+				timeliness: "⏱️",
+				accuracy: "🎯",
+			};
+
+			let activeDs = "candidates";
+			let radarChart, barChart, dimBarChart;
+
+			// ==============================================
+			//  RENDER HERO
+			// ==============================================
+			function renderHero() {
+				const sc = DQ_DATA.system_score;
+				const st = DQ_DATA.system_status;
+
+				// Ring
+				const circ = 2 * Math.PI * 60;
+				const offset = circ * (1 - sc / 100);
+				const fill = document.getElementById("scoreFill");
+				fill.style.stroke = statusCol[st] || "#10b981";
+				setTimeout(() => (fill.style.strokeDashoffset = offset), 100);
+
+				document.getElementById("systemScoreNum").textContent = sc.toFixed(1);
+				document.getElementById("systemScoreNum").className =
+					`score-num s-${cls(st)}`;
+				const badge = document.getElementById("systemStatus");
+				badge.textContent = st;
+				badge.className = `status-badge bg-${cls(st)}`;
+				document.getElementById("runTime").textContent =
+					"Last run: " + DQ_DATA.run_time.replace("T", " ");
+
+				// KPI cards
+				const ds = DQ_DATA.datasets;
+				const totalRows = Object.values(ds).reduce(
+					(s, d) => s + d.row_count,
+					0,
+				);
+				const alertCount = DQ_DATA.alerts.length;
+				const critAlerts = DQ_DATA.alerts.filter(
+					(a) => a.severity === "CRITICAL",
+				).length;
+
+				const kpis = [
+					{
+						icon: "📦",
+						value: Object.keys(ds).length,
+						label: "Datasets Monitored",
+						sub: "Across 3 tables",
+						cls: "excellent",
+					},
+					{
+						icon: "📋",
+						value: totalRows.toLocaleString(),
+						label: "Total Records",
+						sub: "Candidates + Jobs + Apps",
+						cls: "excellent",
+					},
+					{
+						icon: "🚨",
+						value: alertCount,
+						label: "Active Alerts",
+						sub: critAlerts > 0 ? `${critAlerts} critical` : "No critical",
+						cls:
+							alertCount === 0
+								? "excellent"
+								: critAlerts > 0
+									? "critical"
+									: "warning",
+					},
+					{
+						icon: "🏆",
+						value: sc.toFixed(1) + "%",
+						label: "System Health",
+						sub: st,
+						cls: cls(st),
+					},
+				];
+
+				document.getElementById("heroKpis").innerHTML = kpis
+					.map(
+						(k) => `
+    <div class="kpi-card ${k.cls}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`,
+					)
+					.join("");
+			}
+
+			// ==============================================
+			//  RENDER DATASET GRID
+			// ==============================================
+			function renderDsGrid() {
+				document.getElementById("dsGrid").innerHTML = Object.entries(
+					DQ_DATA.datasets,
+				)
+					.map(
+						([name, ds]) => `
+    <div class="ds-card ${name === activeDs ? "active" : ""}" onclick="selectDs('${name}')">
+      <div class="ds-name">📊 ${name.replace("_", " ")}</div>
+      <div class="ds-rows">${ds.row_count.toLocaleString()} rows</div>
+      <div class="ds-score-row">
+        <span class="ds-score-big s-${cls(ds.overall_status)}">${ds.overall_score.toFixed(1)}</span>
+        <span class="status-badge bg-${cls(ds.overall_status)}">${ds.overall_status}</span>
+      </div>
+    </div>`,
+					)
+					.join("");
+			}
+
+			// ==============================================
+			//  RENDER DIMENSION BARS
+			// ==============================================
+			function renderDimBars() {
+				const ds = DQ_DATA.datasets[activeDs];
+				document.getElementById("activeDsLabel").textContent = activeDs.replace(
+					"_",
+					" ",
+				);
+				document.getElementById("dimBars").innerHTML = Object.entries(
+					ds.dimensions,
+				)
+					.map(
+						([dim, d]) => `
+    <div class="dim-row">
+      <span class="dim-name">${DIM_ICONS[dim] || ""} ${dim}</span>
+      <div class="dim-bar-bg">
+        <div class="dim-bar bar-${cls(d.status)}" style="width:${d.score}%"></div>
+      </div>
+      <span class="dim-score s-${cls(d.status)}">${d.score.toFixed(1)}</span>
+      <span class="dim-status bg-${cls(d.status)}">${d.status}</span>
+    </div>`,
+					)
+					.join("");
+			}
+
+			// ==============================================
+			//  CHARTS
+			// ==============================================
+			const CHART_DEFAULTS = {
+				color: "#e2e8f0",
+				plugins: {
+					legend: { labels: { color: "#8892a4", font: { size: 11 } } },
+				},
+			};
+
+			function renderRadar() {
+				const ds = DQ_DATA.datasets[activeDs];
+				const dims = Object.keys(ds.dimensions);
+				const vals = dims.map((d) => ds.dimensions[d].score);
+				const ctx = document.getElementById("radarChart").getContext("2d");
+				if (radarChart) radarChart.destroy();
+				radarChart = new Chart(ctx, {
+					type: "radar",
+					data: {
+						labels: dims.map((d) => d.charAt(0).toUpperCase() + d.slice(1)),
+						datasets: [
+							{
+								label: activeDs.replace("_", " "),
+								data: vals,
+								borderColor: "#6366f1",
+								backgroundColor: "rgba(99,102,241,0.15)",
+								pointBackgroundColor: "#6366f1",
+								pointRadius: 4,
+							},
+						],
+					},
+					options: {
+						animation: { duration: 800 },
+						scales: {
+							r: {
+								min: 70,
+								max: 100,
+								ticks: {
+									color: "#8892a4",
+									backdropColor: "transparent",
+									font: { size: 10 },
+								},
+								grid: { color: "#2d3150" },
+								pointLabels: { color: "#e2e8f0", font: { size: 11 } },
+							},
+						},
+						plugins: { legend: { display: false } },
+					},
+				});
+			}
+
+			function renderBarChart() {
+				const ds = DQ_DATA.datasets;
+				const names = Object.keys(ds).map((n) => n.replace("_", " "));
+				const vals = Object.values(ds).map((d) => d.overall_score);
+				const cols = Object.values(ds).map((d) => statusCol[d.overall_status]);
+				const ctx = document.getElementById("barChart").getContext("2d");
+				if (barChart) barChart.destroy();
+				barChart = new Chart(ctx, {
+					type: "bar",
+					data: {
+						labels: names,
+						datasets: [
+							{
+								label: "Overall Score",
+								data: vals,
+								backgroundColor: cols,
+								borderRadius: 6,
+								borderSkipped: false,
+							},
+						],
+					},
+					options: {
+						animation: { duration: 900 },
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							x: { ticks: { color: "#8892a4" }, grid: { color: "#2d3150" } },
+							y: {
+								min: 80,
+								max: 100,
+								ticks: { color: "#8892a4" },
+								grid: { color: "#2d3150" },
+							},
+						},
+						plugins: {
+							legend: { display: false },
+							tooltip: {
+								callbacks: { label: (ctx) => ` Score: ${ctx.raw.toFixed(1)}` },
+							},
+						},
+					},
+				});
+			}
+
+			function renderDimBarChart() {
+				const dims = [
+					"completeness",
+					"uniqueness",
+					"validity",
+					"consistency",
+					"timeliness",
+					"accuracy",
+				];
+				const datasets = Object.entries(DQ_DATA.datasets).map(
+					([name, ds], i) => ({
+						label: name.replace("_", " "),
+						data: dims.map((d) => ds.dimensions[d].score),
+						backgroundColor: [
+							"rgba(99,102,241,0.8)",
+							"rgba(16,185,129,0.8)",
+							"rgba(56,189,248,0.8)",
+						][i],
+						borderRadius: 4,
+					}),
+				);
+				const ctx = document.getElementById("dimBarChart").getContext("2d");
+				if (dimBarChart) dimBarChart.destroy();
+				dimBarChart = new Chart(ctx, {
+					type: "bar",
+					data: { labels: dims.map((d) => d.slice(0, 4) + "."), datasets },
+					options: {
+						animation: { duration: 900 },
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							x: { ticks: { color: "#8892a4" }, grid: { color: "#2d3150" } },
+							y: {
+								min: 80,
+								max: 100,
+								ticks: { color: "#8892a4" },
+								grid: { color: "#2d3150" },
+							},
+						},
+						plugins: {
+							legend: { labels: { color: "#8892a4", font: { size: 11 } } },
+						},
+					},
+				});
+			}
+
+			// ==============================================
+			//  ALERTS
+			// ==============================================
+			function renderAlerts() {
+				const alerts = DQ_DATA.alerts;
+				const el = document.getElementById("alertList");
+				document.getElementById("alertCount").textContent =
+					`${alerts.length} alert${alerts.length !== 1 ? "s" : ""}`;
+
+				if (!alerts.length) {
+					el.innerHTML = `<div class="no-alerts"><div class="icon">✅</div><div>No active alerts — all checks passed!</div></div>`;
+					return;
+				}
+
+				const sevEmoji = {
+					CRITICAL: "🔴",
+					HIGH: "🟠",
+					MEDIUM: "🟡",
+					LOW: "🔵",
+				};
+				el.innerHTML = alerts
+					.map(
+						(a) => `
+    <div class="alert-item ${a.severity}">
+      <span class="alert-sev bg-${a.severity === "CRITICAL" ? "critical" : a.severity === "HIGH" ? "critical" : a.severity === "MEDIUM" ? "warning" : "good"}">${sevEmoji[a.severity] || "⚪"} ${a.severity}</span>
+      <div class="alert-body">
+        <div class="alert-rule">${a.rule}</div>
+        <div class="alert-msg">${a.message}</div>
+        <div class="alert-meta">${a.id} · ${a.dataset} · ${a.dimension} · ${a.timestamp}</div>
+      </div>
+    </div>`,
+					)
+					.join("");
+			}
+
+			// ==============================================
+			//  INTERACTIONS
+			// ==============================================
+			function selectDs(name) {
+				activeDs = name;
+				renderDsGrid();
+				renderDimBars();
+				renderRadar();
+			}
+
+			function simulateRefresh() {
+				const btn = document.querySelector(".refresh-btn");
+				btn.textContent = "⟳ Running…";
+				btn.disabled = true;
+				setTimeout(() => {
+					// Simulate a slight score change
+					DQ_DATA.run_time = new Date()
+						.toISOString()
+						.replace("T", " ")
+						.slice(0, 19);
+					renderHero();
+					btn.textContent = "⟳ Refresh";
+					btn.disabled = false;
+				}, 1500);
+			}
+
+			// ==============================================
+			//  INIT
+			// ==============================================
+			window.addEventListener("DOMContentLoaded", () => {
+				renderHero();
+				renderDsGrid();
+				renderDimBars();
+				renderRadar();
+				renderBarChart();
+				renderDimBarChart();
+				renderAlerts();
+			});
+		</script>
+	</body>
+</html>
