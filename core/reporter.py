@@ -90,7 +90,7 @@ def print_console_report(results: dict, alerts: list) -> None:
     RESET = "\033[0m"
 
     print("\n" + "═" * WIDTH)
-    print(f"{'  DATA QUALITY MONITORING SYSTEM — GAMAGE RECRUITERS':^{WIDTH}}")
+    print(f"{'  DATA QUALITY MONITORING SYSTEM':^{WIDTH}}")
     print(f"{'  Run at: ' + results['run_time']:^{WIDTH}}")
     print("═" * WIDTH)
 
@@ -100,20 +100,21 @@ def print_console_report(results: dict, alerts: list) -> None:
     print(f"\n  SYSTEM OVERALL SCORE: {col}{sc:.1f} / 100  [{st}]{RESET}\n")
 
     for ds_name, ds in results["datasets"].items():
-        print(f"  ┌{'─'*68}┐")
+        print(f"  ┌{'─'*74}┐")
         print(f"  │  Dataset: {ds_name:<20}  Rows: {ds['row_count']:<6}  "
               f"Score: {ds['overall_score']:5.1f}  [{ds['overall_status']}]{' '*(5-len(ds['overall_status']))}  │")
-        print(f"  ├{'─'*68}┤")
+        print(f"  ├{'─'*74}┤")
 
         for dim, data in ds["dimensions"].items():
             score = data.get("score", 0)
             status = data.get("status", "")
             col = STATUS_COLOR.get(status, "")
             bar = BARS.get(status, "░" * 12)
-            print(
-                f"  │  {dim:<14}  {bar}  {col}{score:5.1f}{RESET}  [{status}]{' '*(9-len(status))}    │")
+            txt = f"  │  {dim:<14}  {bar}  {col}{score:5.1f}{RESET}  [{status}]{' '*(9-len(status))}"
+            print(txt, end="")
+            print(" " * (74 + 12 - len(txt)) + "│")
 
-        print(f"  └{'─'*68}┘\n")
+        print(f"  └{'─'*74}┘\n")
 
     crit = sum(1 for a in alerts if a["severity"] == "CRITICAL")
     high = sum(1 for a in alerts if a["severity"] == "HIGH")

@@ -632,121 +632,130 @@
 			//  DATA (from monitor.py output)
 			// ==============================================
 			const DQ_DATA = {
-				system_score: 98.4,
-				system_status: "EXCELLENT",
-				run_time: "2026-07-03T04:04:46",
-				datasets: {
-					candidates: {
-						overall_score: 96.18,
-						overall_status: "EXCELLENT",
-						row_count: 300,
-						col_count: 13,
-						dimensions: {
-							completeness: {
-								score: 97.29,
-								status: "EXCELLENT",
-							},
-							uniqueness: {
-								score: 98.66,
-								status: "GOOD",
-							},
-							validity: {
-								score: 91.13,
-								status: "GOOD",
-							},
-							consistency: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-							timeliness: {
-								score: 91.04,
-								status: "GOOD",
-							},
-							accuracy: {
-								score: 98.98,
-								status: "EXCELLENT",
-							},
-						},
-					},
-					job_postings: {
-						overall_score: 99.61,
-						overall_status: "EXCELLENT",
-						row_count: 80,
-						col_count: 12,
-						dimensions: {
-							completeness: {
-								score: 99.53,
-								status: "EXCELLENT",
-							},
-							uniqueness: {
-								score: 98.12,
-								status: "GOOD",
-							},
-							validity: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-							consistency: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-							timeliness: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-							accuracy: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-						},
-					},
-					applications: {
-						overall_score: 99.41,
-						overall_status: "EXCELLENT",
-						row_count: 500,
-						col_count: 7,
-						dimensions: {
-							completeness: {
-								score: 99.04,
-								status: "EXCELLENT",
-							},
-							uniqueness: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-							validity: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-							consistency: {
-								score: 97.4,
-								status: "EXCELLENT",
-							},
-							timeliness: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-							accuracy: {
-								score: 100.0,
-								status: "EXCELLENT",
-							},
-						},
-					},
-				},
-				alerts: [
-					{
-						id: "ALT-001",
-						timestamp: "2026-07-03T04:04:46",
-						severity: "MEDIUM",
-						dataset: "candidates",
-						rule: "Column Validity Issue",
-						message:
-							"[CANDIDATES] Column 'phone': Invalid phones: [783197857.0, 710872248.0, 715831819.0]",
-						score: 0.0,
-						dimension: "validity",
-					},
-				],
-			};
+  "system_score": 97.41,
+  "system_status": "EXCELLENT",
+  "run_time": "2026-07-06T12:33:30",
+  "datasets": {
+    "candidates": {
+      "overall_score": 96.22,
+      "overall_status": "EXCELLENT",
+      "row_count": 300,
+      "col_count": 13,
+      "dimensions": {
+        "completeness": {
+          "score": 98.37,
+          "status": "EXCELLENT"
+        },
+        "uniqueness": {
+          "score": 98.34,
+          "status": "GOOD"
+        },
+        "validity": {
+          "score": 91.01,
+          "status": "GOOD"
+        },
+        "consistency": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "timeliness": {
+          "score": 91.17,
+          "status": "GOOD"
+        },
+        "accuracy": {
+          "score": 98.45,
+          "status": "EXCELLENT"
+        }
+      }
+    },
+    "job_postings": {
+      "overall_score": 96.84,
+      "overall_status": "EXCELLENT",
+      "row_count": 80,
+      "col_count": 10,
+      "dimensions": {
+        "completeness": {
+          "score": 86.56,
+          "status": "GOOD"
+        },
+        "uniqueness": {
+          "score": 96.25,
+          "status": "GOOD"
+        },
+        "validity": {
+          "score": 98.25,
+          "status": "EXCELLENT"
+        },
+        "consistency": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "timeliness": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "accuracy": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        }
+      }
+    },
+    "applications": {
+      "overall_score": 99.18,
+      "overall_status": "EXCELLENT",
+      "row_count": 500,
+      "col_count": 7,
+      "dimensions": {
+        "completeness": {
+          "score": 99.68,
+          "status": "EXCELLENT"
+        },
+        "uniqueness": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "validity": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "consistency": {
+          "score": 95.4,
+          "status": "EXCELLENT"
+        },
+        "timeliness": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        },
+        "accuracy": {
+          "score": 100.0,
+          "status": "EXCELLENT"
+        }
+      }
+    }
+  },
+  "alerts": [
+    {
+      "id": "ALT-002",
+      "timestamp": "2026-07-06T12:33:30",
+      "severity": "HIGH",
+      "dataset": "job_postings",
+      "rule": "Low Fill Rate on Required Field",
+      "message": "[JOB_POSTINGS] Column 'min_salary' fill rate is 0.0% (80 missing)",
+      "score": 0.0,
+      "dimension": "completeness"
+    },
+    {
+      "id": "ALT-001",
+      "timestamp": "2026-07-06T12:33:30",
+      "severity": "MEDIUM",
+      "dataset": "candidates",
+      "rule": "Column Validity Issue",
+      "message": "[CANDIDATES] Column 'phone': Invalid phones: [783197857.0, 710872248.0, 715831819.0]",
+      "score": 0.0,
+      "dimension": "validity"
+    }
+  ]
+};
 
 			// ==============================================
 			//  HELPERS

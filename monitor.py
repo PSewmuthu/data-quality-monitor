@@ -75,11 +75,12 @@ def run_pipeline(data_dir: str, max_age: int, output_dir: str = "output/reports"
 
     # ------------ Save time-stamped reports ------------
     logging.info("[Pipeline] Saving reports...")
-    os.makedirs(output_dir, exist_ok=True)
+    REPORTS_DIR = os.path.join(output_dir, "reports")
+    os.makedirs(REPORTS_DIR, exist_ok=True)
 
-    save_json_report(results, alerts, output_dir)
-    save_csv_summary(results, alerts, output_dir)
-    save_alerts_csv(alerts, output_dir)
+    save_json_report(results, alerts, REPORTS_DIR)
+    save_csv_summary(results, alerts, REPORTS_DIR)
+    save_alerts_csv(alerts, REPORTS_DIR)
 
     # ------------ Refresh HTML dashboard with live data ------------
     logging.info("[Pipeline] Refreshing HTML dashboard...")
@@ -125,7 +126,7 @@ def main():
         "--data", type=str, default=DATA_DIR,
         help="Directory containing the datasets (default: 'data/').")
     parser.add_argument(
-        "--output", type=str, default=OUTPUT_DIR / "reports",
+        "--output", type=str, default=OUTPUT_DIR,
         help="Directory to save reports (default: 'output/reports').")
     parser.add_argument(
         "--generate", action="store_true",
