@@ -1,10 +1,18 @@
 '''
 monitor.py - Data Quality Monitoring System
 Entry point. Load datasets, run checks, fires alerts, saves reports, and refreshes the HTML dashboard with live data.
+
+Usage:
+    python monitor.py                            # uses existing sample data
+    python monitor.py --generate                 # regenerate sample data first
+    python monitor.py --data path/to/csvs/       # custom CSV folder
+    python monitor.py --output path/to/reports/  # custom output folder
+    python monitor.py --max-age 180              # timeliness window (days)
 '''
 import os
 import sys
 import logging
+import argparse
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(__file__)) if os.path.dirname(
@@ -84,3 +92,60 @@ def run_pipeline(data_dir: str, max_age: int, output_dir: str = "output/reports"
     print(f"   Open output/dq_dashboard.html in a browser to view the dashboard.\n")
 
     return results, alerts
+
+
+def generate_sample_data():
+    logging.info("[Data Generation] Generating sample datasets...")
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "gen", os.path.join(DATA_DIR, "generate_sample_data.py")
+    )
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+
+    gen.generate_candidates(300).to_csv(
+        os.path.join(DATA_DIR, "candidates.csv"), index=False)
+    gen.generate_jobs(80).to_csv(os.path.join(
+        DATA_DIR, "job_postings.csv"), index=False)
+
+    cdf = pd.read_csv(os.path.join(DATA_DIR, "candidates.csv"))
+    jdf = pd.read_csv(os.path.join(DATA_DIR, "job_postings.csv"))
+
+    gen.generate_applications(cdf, jdf, 500).to_csv(
+        os.path.join(DATA_DIR, "applications.csv"), index=False)
+
+    logging.info("[Data Generation] Sample datasets generated successfully.")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Data Quality Monitoring System")
+    parser.add_argument(
+        "--data", type=str, default=DATA_DIR,
+        help="Directory containing the datasets (default: 'data/').")
+    parser.add_argument(
+        "--output", type=str, default=OUTPUT_DIR / "reports",
+        help="Directory to save reports (default: 'output/reports').")
+    parser.add_argument(
+        "--generate", action="store_true",
+        help="Regenerate sample data before running.")
+    parser.add_argument(
+        "--max_age", type=int, default=365,
+        help="Timeliness max-age threshold in days (default: 365).")
+    args = parser.parse_args()
+
+    print("\n┌────────────────────────────────────────────────────────────────────┐")
+    print("│                 DATA QUALITY MONITORING SYSTEM                     │")
+    print("└────────────────────────────────────────────────────────────────────┘\n")
+
+    if args.generate:
+        generate_sample_data()
+
+    results, alerts = run_pipeline(args.data, args.max_age, args.output)
+
+    return results, alerts
+
+
+if __name__ == "__main__":
+    main()
